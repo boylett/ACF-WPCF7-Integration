@@ -4,7 +4,7 @@
 	 * Plugin Name:  ACF WPCF7 Integration
 	 * Plugin URI:   https://github.com/boylett/ACF-WPCF7-Integration
 	 * Description:  Integrate ACF with WPCF7 to enable custom fields on a contact form
-	 * Version:      0.0.1
+	 * Version:      0.0.2
 	 * Author:       Ryan Boylett
 	 * Author URI:   http://github.com/boylett/
 	 */
@@ -26,37 +26,43 @@
 	{
 		if(isset($_GET['post']))
 		{
-			$panels['custom-fields-panel'] = array
-			(
-				"title"    => "Custom Fields",
-				"callback" => function()
-				{
-					$GLOBALS['wpcf7form-display'] = true;
+			$GLOBALS['wpcf7form-display'] = true;
 
-					$groups    = acf_get_field_groups($_GET['post']);
-					$group_ids = array();
+			$groups = acf_get_field_groups($_GET['post']);
 
-					foreach($groups as $group)
+			if(!empty($groups))
+			{
+				$panels['custom-fields-panel'] = array
+				(
+					"title"    => "Custom Fields",
+					"callback" => function() use($groups)
 					{
-						$group_ids[] = $group['key'];
+						$group_ids = array();
+
+						foreach($groups as $group)
+						{
+							$group_ids[] = $group['key'];
+						}
+
+						acf_form(array
+						(
+							"field_groups"       => $group_ids,
+							"form"               => false,
+							"html_submit_button" => '<input type="submit" style="display: none;" />',
+							"id"                 => "wpcf7-form",
+							"post_id"            => $_GET['post']
+						));
 					}
+				);
 
-					acf_form(array
-					(
-						"form"               => false,
-						"id"                 => "wpcf7-form",
-						"post_id"            => $_GET['post'],
-						"field_groups"       => $group_ids,
-						"html_submit_button" => '<input type="submit" style="display: none;" />'
-					));
-				}
-			);
+				$settings = $panels['additional-settings-panel'];
 
-			$settings = $panels['additional-settings-panel'];
+				unset($panels['additional-settings-panel']);
 
-			unset($panels['additional-settings-panel']);
+				$panels['additional-settings-panel'] = $settings;
+			}
 
-			$panels['additional-settings-panel'] = $settings;
+			unset($GLOBALS['wpcf7form-display']);
 		}
 
 		return $panels;
