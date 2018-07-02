@@ -4,7 +4,7 @@
 	 * Plugin Name:  ACF WPCF7 Integration
 	 * Plugin URI:   https://github.com/boylett/ACF-WPCF7-Integration
 	 * Description:  Integrate ACF with WPCF7 to enable custom fields on a contact form
-	 * Version:      0.0.2
+	 * Version:      0.0.3
 	 * Author:       Ryan Boylett
 	 * Author URI:   http://github.com/boylett/
 	 */
@@ -24,13 +24,24 @@
 	
 	add_filter('wpcf7_editor_panels', function($panels)
 	{
-		if(isset($_GET['post']))
-		{
-			$GLOBALS['wpcf7form-display'] = true;
+		$GLOBALS['wpcf7form-display'] = true;
 
+		if(isset($_GET['post']) and !empty($_GET['post']))
+		{
 			$groups = acf_get_field_groups($_GET['post']);
 
-			if(!empty($groups))
+			if(empty($groups))
+			{
+				$panels['custom-fields-panel'] = array
+				(
+					"title"    => "Custom Fields",
+					"callback" => function()
+					{
+						echo '<p><em>This contact form does not have any Custom Fields.</em></p>';
+					}
+				);
+			}
+			else
 			{
 				$panels['custom-fields-panel'] = array
 				(
@@ -54,16 +65,27 @@
 						));
 					}
 				);
-
-				$settings = $panels['additional-settings-panel'];
-
-				unset($panels['additional-settings-panel']);
-
-				$panels['additional-settings-panel'] = $settings;
 			}
-
-			unset($GLOBALS['wpcf7form-display']);
 		}
+		else
+		{
+			$panels['custom-fields-panel'] = array
+			(
+				"title"    => "Custom Fields",
+				"callback" => function()
+				{
+					echo '<p><em>Please save this contact form to start using Advanced Custom Fields.</em></p>';
+				}
+			);
+		}
+
+		$settings = $panels['additional-settings-panel'];
+
+		unset($panels['additional-settings-panel']);
+
+		$panels['additional-settings-panel'] = $settings;
+
+		unset($GLOBALS['wpcf7form-display']);
 
 		return $panels;
 	});
